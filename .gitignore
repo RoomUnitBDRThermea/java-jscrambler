@@ -1,7 +1,2 @@
-*~
-config.json
-nbproject/
-build/
-dist/
-build.xml
-manifest.mf
+.gradle
+/build
