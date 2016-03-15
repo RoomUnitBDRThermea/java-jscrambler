@@ -151,6 +151,10 @@ public class JScramblerFacade {
   }
 
   public static void process(JSONObject config) throws Exception {
+      process(config, false);
+  }
+    
+  public static void process(JSONObject config, boolean deleteProject) throws Exception {
     // Check if keys were provided by the config
     if (!config.has("keys")) {
       throw new Exception("Keys must be provided in the configuration.");
@@ -282,11 +286,19 @@ public class JScramblerFacade {
     if (!JScramblerFacade.silent) {
       System.out.println("Written");
     }
+    if (deleteProject) {
+	deleteCode(client, projectId);
+    }
   }
 
   public static void process(String configPath) throws Exception {
     JSONObject config = JScramblerFacade.parseConfig(configPath);
     JScramblerFacade.process(config);
+  }
+
+  public static void process(String configPath, boolean deleteProject) throws Exception {
+    JSONObject config = JScramblerFacade.parseConfig(configPath);
+    JScramblerFacade.process(config, deleteProject);
   }
 
   protected static JSONObject parseConfig(String configPath) throws JSONException, Exception {
