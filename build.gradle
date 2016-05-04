@@ -10,6 +10,9 @@ sourceSets {
     }
 }
 
+targetCompatibility = '1.6'
+sourceCompatibility = '1.6'
+
 repositories {
    flatDir {
        dirs 'lib'

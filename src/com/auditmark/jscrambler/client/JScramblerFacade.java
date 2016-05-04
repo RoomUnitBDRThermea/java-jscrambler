@@ -190,7 +190,7 @@ public class JScramblerFacade {
       throw new Exception("Output directory must be provided.");
     }
     String dest = config.getString("filesDest");
-    final List<String> filesSrc = new ArrayList<>();
+    final List<String> filesSrc = new ArrayList<String>();
     for (int i = 0, l = files.length(); i < l; ++i) {
       String origFile = (String) files.get(i);
       if (origFile.startsWith("./")) {
@@ -263,7 +263,7 @@ public class JScramblerFacade {
     }
     // Prepare object to post
     // Check if params were provided
-    Map<String, Object> params = new HashMap<>();
+    Map<String, Object> params = new HashMap<String, Object>();
     if (config.has("params")) {
       JSONObject paramsJSON = config.getJSONObject("params");
       Iterator it = paramsJSON.keys();
@@ -287,7 +287,7 @@ public class JScramblerFacade {
       System.out.println("Written");
     }
     if (deleteProject) {
-	deleteCode(client, projectId);
+        deleteCode(client, projectId);
     }
   }
 
@@ -333,14 +333,24 @@ public class JScramblerFacade {
   protected static void zipProject(List<String> files) throws FileNotFoundException, IOException {
     boolean hasFiles = false;
     if (files.size() == 1 && files.get(0).endsWith(".zip")) {
-      try (FileOutputStream fos = new FileOutputStream(JScramblerFacade.ZIP_TMP_FILE);
-           FileInputStream fis = new FileInputStream(files.get(0))) {
+      FileOutputStream fos = null;
+      FileInputStream fis = null;
+      try {
+        fos = new FileOutputStream(JScramblerFacade.ZIP_TMP_FILE);
+        fis = new FileInputStream(files.get(0));
         hasFiles = true;
         fos.getChannel().transferFrom(fis.getChannel(), 0, fis.getChannel().size());
       }
+      finally {
+        if (fis != null) fis.close();
+        if (fos != null) fos.close();
+      }
     } else {
-      try (FileOutputStream fos = new FileOutputStream(JScramblerFacade.ZIP_TMP_FILE);
-           ZipOutputStream zos = new ZipOutputStream(fos)) {
+      FileOutputStream fos = null;
+      ZipOutputStream zos = null;
+      try {
+        fos = new FileOutputStream(JScramblerFacade.ZIP_TMP_FILE);
+        zos = new ZipOutputStream(fos);
         for (String filePath : files) {
           File file = new File(filePath);
           if (file.isDirectory()) {
@@ -348,7 +358,9 @@ public class JScramblerFacade {
             zos.putNextEntry(zipEntry);
             zos.closeEntry();
           } else {
-            try (FileInputStream fis = new FileInputStream(file)) {
+            FileInputStream fis = null;
+            try {
+              fis = new FileInputStream(file);
               ZipEntry zipEntry = new ZipEntry(filePath);
               zos.putNextEntry(zipEntry);
 
@@ -360,6 +372,9 @@ public class JScramblerFacade {
               zos.closeEntry();
               hasFiles = true;
             }
+            finally {
+              if (fis != null) fis.close();
+            }
           }
         }
       } catch (FileNotFoundException ex) {
@@ -368,6 +383,10 @@ public class JScramblerFacade {
         } else {
           throw ex;
         }
+      }
+      finally {
+        if (zos != null) zos.close();
+        if (fos != null) fos.close();
       }
     }
     if (!hasFiles) {
@@ -381,7 +400,9 @@ public class JScramblerFacade {
     if (!folder.exists()) {
       folder.mkdir();
     }
-    try (ZipInputStream zis = new ZipInputStream(zipContent)) {
+    ZipInputStream zis = null;
+    try {
+      zis = new ZipInputStream(zipContent);
       ZipEntry ze = zis.getNextEntry();
 
       while (ze != null) {
@@ -389,15 +410,25 @@ public class JScramblerFacade {
         String fileName = ze.getName();
         File newFile = new File(dest + File.separator + fileName);
         new File(newFile.getParent()).mkdirs();
-        try (FileOutputStream fos = new FileOutputStream(newFile)) {
+        FileOutputStream fos = null;
+        try {
+          fos = new FileOutputStream(newFile);
           int len;
           while ((len = zis.read(buffer)) > 0) {
             fos.write(buffer, 0, len);
           }
         }
+        finally {
+          if (fos != null)
+            fos.close();
+        }
         ze = zis.getNextEntry();
       }
       zis.closeEntry();
+    }
+    finally {
+      if (zis != null)
+        zis.close();
     }
   }
 }
